@@ -1,1 +1,9 @@
-123456
+border-width 不支持百分比  
+                      支持关键字 thin（1px） medium默认值（3px）thick（5px）
+
+border-style dashed(虚线)   chrome/firefox    宽高比 3：1  间距比例 1:1
+                                            IE                          宽高比 2：1  间距比例  2:1
+                     dotted(点线)    chrome/firefox     方点
+                                            IE                           圆点            （IE7/IE8可以利用此特性实现圆角效果）
+                     double(双线)   实线宽度相等 中间距离加减1
+                     ouset(外凸)/groove(沟槽)/ridge(山脊)   有一种3d的效果
