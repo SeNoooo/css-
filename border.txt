@@ -7,3 +7,7 @@ border-style dashed(虚线)   chrome/firefox    宽高比 3：1  间距比例 1:1
                                             IE                           圆点            （IE7/IE8可以利用此特性实现圆角效果）
                      double(双线)   实线宽度相等 中间距离加减1
                      ouset(外凸)/groove(沟槽)/ridge(山脊)   有一种3d的效果
+
+border-color 如果没有指定border-color的时候 会使用color作为边框色
+
+background-position定位在css2.1中只能相对左上角定位 如果想设置图片位置相对右侧始终距离50px可以利用border来实现
