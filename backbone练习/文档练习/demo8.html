@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="underscore.js"></script>
+  <script src="backbone.js"></script>
+</head>
+<body>
+  <div id="search_container"></div>
+   
+<script type="text/template" id="search_template">
+    <label><%= search_label %></label>
+    <input type="text" id="search_input" />
+    <input type="button" id="search_button" value="Search" />
+</script>
+   
+<script type="text/javascript">
+     SearchView = Backbone.View.extend({
+        el: $("#search_container"),
+        initialize: function(){
+            this.render();
+        },
+        render: function(){
+            //Pass variables in using Underscore.js Template
+            var variables = { search_label: "My Search" };
+            // Compile the template using underscore
+            var template = _.template( $("#search_template").html());
+            // Load the compiled HTML into the Backbone "el"
+            console.log(template)
+            // this.el是dom节点，不能用jquery的方法 要用this.$el
+            this.$el.html(template(variables));
+        },
+        events: {
+            "click input[type=button]": "doSearch"
+        },
+        doSearch: function( event ){
+            // Button clicked, you can access the element that was clicked with event.currentTarget
+            alert( "Search for " + $("#search_input").val() );
+        }
+    });
+    
+    var search_view = new SearchView();
+</script>
+</body>
+</html>

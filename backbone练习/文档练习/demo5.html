@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+<script type="text/javascript" src="http://backbonejs.org/backbone-min.js"></script>
+ 
+<link href="http://cdn.bootcss.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="external nofollow" rel="external nofollow" rel="external nofollow" rel="stylesheet">
+</head>
+<body>
+ <table id="js-id-gists" class="table">
+  <thead><th>description</th><th>URL</th><th>created_at</th><th></th></thead>
+  <tbody></tbody>
+ </table>
+ <script type="text/javascript">
+ var Gist = Backbone.Model.extend(),
+//  Collection 是model的集合
+// 把Model改成Collection，指定Collection的Model，这样Collectio获得返回值会自动封装成Model的Array
+  Gists = Backbone.Collection.extend({
+   model: Gist,
+   url: 'https://api.github.com/gists/public',
+   parse: function (response) {
+    return response;
+   }
+  }),
+  gists = new Gists();
+ 
+ var GistRow = Backbone.View.extend({
+  tagName: 'tr',
+  render: function (model) {
+   this.el.innerHTML = '<td>' + model.get('description') + '</td><td>'+ model.get('url') + '</td><td>' + model.get('created_at') + '</td><td></td>'
+   return this;
+  }
+ });
+ 
+ var GistsView = Backbone.View.extend({
+  el: 'tbody',
+  collection: gists,
+  initialize: function () {
+   // Collection和Model不同，获取到数据也不会触发事件，所以绑定一个reset事件，在之后的fetch操作中传递{reset: true}
+   this.listenTo(this.collection, 'reset', this.render);
+  },
+  render: function () {
+   var html = '';
+  //  从collection中遍历model然后在把model传给GistRow
+   _.forEach(this.collection.models, function (model) {
+    var tr = new GistRow();
+    html += tr.render(model).el.outerHTML;
+   });
+   this.el.innerHTML = html;
+   return this;
+  }
+ });
+ var gistsView = new GistsView();
+ //model和服务器端的交互，调用save方法会post对象的所有属性到server端，调用fetch时又会发送get请求到server端，接受数据和发送数据的格式均为json格式。
+ gists.fetch({reset: true});
+ </script>
+</body>
+</html>

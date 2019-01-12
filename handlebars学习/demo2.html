@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="jquery-1.11.2.min.js"></script>
+  <script src="handlebars-v4.0.12.js"></script>
+  <title>Document</title>
+  <style>
+    .card{
+      font-size:30px;
+      float: left;
+      margin: 20px;
+      background-color: pink;
+    }
+  </style>
+  <script id='card-template' type='text/x-handlebars-template'>
+    <!-- 可以遍历data this指的是data 拿到数据渲染页面 -->
+    {{#each this}}
+    <!-- 因为有两组数据所以会遍历产生2个class为card的div -->
+    <div class="card">
+      <!-- index 是each里面的一个序号 chinese是一个自定义的方法-->
+        <div>{{chinese @index}}</div>
+        <div>姓名：{{name}}</div>
+        <!-- 给birth一个判断 如果有才显示，没有就不显示 -->
+        {{#if birth}}
+        <div>出生日期：{{birth}}</div>
+        {{/if}}
+        <div>出生地：{{home}}</div>
+        <div>职业：{{job}}</div>
+        <ul>
+          {{#each books}}
+          <!-- #isfirst 也是一个自定义方法，但是return的值不是直接用 所以给一个options参数接收这个return的值 -->
+          <li {{#isfirst @index}} style="color:red;" {{/isfirst}} 
+            {{#isblue ../books}} style="color:blue;" {{/isblue}}
+          >
+            <!-- 此次的this指的是books addone是一个自定义的方法-->
+            {{addone @../index}}-{{addone @index}} {{this}}
+          </li>
+          {{/each}}
+        </ul>
+    </div>
+    {{/each}}
+  </script>
+</head>
+<body>
+  <div id="card">
+    
+  </div>
+  <script>
+    var data = [{
+      name: '凯文米特尼克',
+      birth: '1997.05.23',
+      home:'美国洛杉矶',
+      job:'网络安全咨询师',
+      books:[
+        '《欺骗的艺术》',
+        '《入侵的艺术》',
+        '《线上幽灵》'
+      ]
+    },
+    {
+      name: '沃兹尼亚克',
+      birth: '1950.8.11',
+      home:'美国加利福利亚',
+      job:'电脑工程师',
+      books:[
+        '《与苹果一起疯狂》'
+      ]
+    },
+    {
+      name: 'channingbreeze',
+      home:'北京',
+      job:'全栈工程师',
+    }
+  ];
+    // value 是chinese后面跟的@index
+    Handlebars.registerHelper("chinese",function(value){
+      var arr = ['一','二','三']
+      return arr[value]
+    });
+    Handlebars.registerHelper('addone',function(value){
+      return value+1
+    })
+    // 块级helper
+    Handlebars.registerHelper('isfirst',function(value,options){
+      console.log(options)
+      if(value == 0){
+        // ？？？？
+        return options.fn(this)
+      }
+    })
+    Handlebars.registerHelper('isblue',function(value,options){
+      // value在此处的值是books的数据
+      if(value && value.length>2) {
+        return options.fn(this);
+      }
+    })
+    var t = $('#card-template').html();
+    var f = Handlebars.compile(t);
+    var h = f(data);
+    $('#card').html(h);
+  </script>
+</body>
+</html>

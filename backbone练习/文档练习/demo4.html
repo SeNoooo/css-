@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+<script type="text/javascript" src="http://backbonejs.org/backbone-min.js"></script>
+ 
+<link href="http://cdn.bootcss.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="external nofollow" rel="external nofollow" rel="external nofollow" rel="stylesheet">
+</head>
+<body>
+ <table id="js-id-gists" class="table">
+  <thead><th>description</th><th>URL</th><th>created_at</th></thead>
+  <tbody></tbody>
+ </table>
+ <script type="text/javascript">
+/* 替换之前代码的JS部分(LINE16~45) */
+// 创建了两个model
+var Gist = Backbone.Model.extend(),
+  Gists = Backbone.Model.extend({
+   url: 'https://api.github.com/gists/public',
+   parse: function (response) {
+    return response;
+   }
+  }),
+  gists = new Gists();
+ 
+ var GistRow = Backbone.View.extend({
+  tagName: 'tr',
+  // 这里的object是从下面代码50行的forEach传来的
+  render: function (object) {
+    // 在此处创建第一个model的实例
+    // render方法会传一个Object来实例化一个Gist的Model，再从这个Model里get需要的值
+   var model = new Gist(object);
+   this.el.innerHTML = '<td>' + model.get('description') + '</td><td>'+ model.get('url') + '</td><td>' + model.get('created_at') + '</td><td></td>'
+   return this;
+  }
+ });
+ 
+ var GistsView = Backbone.View.extend({
+  el: 'tbody',
+  model: gists,
+  // view的初始化函数
+  initialize: function () {
+   this.listenTo(this.model, 'change', this.render);
+  },
+  render: function () {
+  // 遍历Model中的所有属性。现在使用的是Model而不是Collection，所以遍历出的是// Object。forEach是Underscore的函数
+   var html = '';
+  //  forEach是Underscore的函数
+   _.forEach(this.model.attributes, function (object) {
+    var tr = new GistRow();
+    html += tr.render(object).el.outerHTML;
+   });
+   this.el.innerHTML = html;
+   return this;
+  }
+ });
+ var gistsView = new GistsView();
+ //  执行fetch。从远程获取数据
+ gists.fetch();
+ </script>
+</body>
+</html>

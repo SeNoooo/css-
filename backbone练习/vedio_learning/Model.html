@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <script src="underscore.js"></script>
+    <script src="jquery-1.11.2.min.js"></script>
+    <script src="backbone.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      var _obj = {
+        'title' : 'task1',
+        'description' : 'description1'
+      }  
+      // ToDoItem类从Backbone中继承Model类
+      var ToDoItem = Backbone.Model.extend({
+
+      });
+
+      // 实例化ToDoItem类
+      var toDoItem = new ToDoItem(_obj)
+      // get set方法访问属性
+      toDoItem.get('title')
+      toDoItem.set('title','change task02')
+      // toJSON方法把内容领出来新建一个object，
+      toDoItem.toJSON()
+      // 复制出来的对象可以直接.title直接得到属性
+      toDoItem.toJSON().title
+    </script>
+  </body>
+</html>

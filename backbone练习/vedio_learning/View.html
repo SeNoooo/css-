@@ -1,0 +1,63 @@
+<html>
+  <head>
+    <script src="underscore.js"></script>
+    <script src="jquery-1.11.2.min.js"></script>
+    <script src="backbone.js"></script>
+  </head>
+  <body>
+    <p id="header"></p>
+    <script type="text/javascript">
+
+      // ToDoItem类从Backbone中继承Model类
+      var ToDoItem = Backbone.Model.extend({
+
+      });
+      // 实例化ToDoItem
+      var toDoItem = new ToDoItem({
+        'title' : 'task1',
+        'description' : 'description1'
+      });
+
+      // ToDoItemView类从Backbone中继承View类
+      // View类为我们提供了构造view的模板
+      var ToDoItemView = Backbone.View.extend({
+        // tagName,className,id是 backbone内置的
+        // 更具tagName的值去生成相对应的页面元素
+        tagName : 'p',
+        // // 设置 tagName 的class属性
+        // className : 'item-task',
+        // 设置 tagName 的id属性
+        id : 'header',
+        // // 对于li元素的其他属性要写在attributes里
+        // attributes : {
+        //   style : 'color:red;'
+        // }
+
+        // // 当页面上已存在的元素，直接指定el绑定
+        // el : '#header'
+        
+        // render可以渲染view
+        render : function(){
+          // 得到model的title属性
+          this.model.get('title')
+          // 指的是当前的view实例
+          this.$el.html('<span>'+this.model.get('title')+'</span>')
+          return this
+        }
+      });
+
+      // 实例化ToDoItemView
+      var toDoItemView = new ToDoItemView({
+        // 在View里指定toDoItem关联起来
+        model : toDoItem
+      })
+      var toDoItemView2 = new ToDoItemView()
+      // 在View中 render方法不会自动调用，需要手动调用
+      // render的返回值就是toDoItemView
+      toDoItemView.render().$el.appendTo('body');
+
+
+      
+    </script>
+  </body>
+</html>

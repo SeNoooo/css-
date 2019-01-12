@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+<script type="text/javascript" src="http://backbonejs.org/backbone-min.js"></script>
+ 
+<link href="http://cdn.bootcss.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="external nofollow" rel="external nofollow" rel="external nofollow" rel="stylesheet">
+</head>
+<body>
+ <table id="js-id-gists" class="table">
+  <thead><th>description</th><th>URL</th><th>created_at</th></thead>
+  <tbody></tbody>
+ </table>
+ <script type="text/javascript">
+//  创建一个model并实例化
+ var Gist = Backbone.Model.extend({
+  //  数据源  api接口的地址
+  url: 'https://api.github.com/gists/public',
+  // 拿到数据后要进行的操作
+  parse: function (response) {
+   return (response[0]);
+  }
+ }),
+  gist = new Gist();
+ 
+//  创建一个View对象并实例化
+  var GistRow = Backbone.View.extend({
+    // 父对象是tbody
+    el: 'tbody',
+    // 数据模型是gist
+    MODEL: gist,
+    // 事件是点击a标签 执行replaceURL函数
+    events: {
+    'click a': 'replaceURL'
+    },
+    replaceURL: function () {
+      this.MODEL.set('url', 'http://dmyz.org');
+    },
+    // view的初始化函数 监听this.MODEL 如果this.MODEL改变 就触发render函数
+    initialize: function () {
+      this.listenTo(this.MODEL, 'change', this.render);
+    },
+    render: function () {
+      var model = this.MODEL,
+        tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + model.get('description') + '</td><td>' + model.get('url') + '</td><td>' + model.get('created_at') + '</td><td><a href="javascript:void(0)" rel="external nofollow">®</a></td>';
+      this.el.innerHTML = tr.outerHTML;
+      return this;
+    }
+ });
+//  实例化GistRow函数 执行initialize函数
+ var tr = new GistRow();
+ //  执行fetch。从远程获取数据，获到数据后会触发change事件
+ gist.fetch();
+ </script>
+</body>
+</html>

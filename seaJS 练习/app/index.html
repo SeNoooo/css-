@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"   
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">  
+<html xmlns="http://www.w3.org/1999/xhtml">  
+<head>  
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />  
+<title>seaJS</title>  
+<link rel="stylesheet" href="../static/hellow/hellow.css" />  
+</head>  
+<body>  
+<h4>seaJS 例子 example 01</h4>  
+<div id="div01" class="div01">  
+<span id="span01" class="span01">my TEXT 001 seaJS 例子，鼠标移动到上面看看边框变化...</span>  
+</div>  
+<br>  
+<div id="div02" class="div02">my TEXT 002 seaJS 例子，鼠标放到上面等下看</div>  
+<script type="text/javascript" src="../sea-modules/sea.js"></script>  
+<script type="text/javascript">  
+// seajs 的简单配置  
+seajs.config({  
+    //all alias path base on this//所有别名基于本路径  
+    base:"../sea-modules/"  
+      
+    //define each self path//定义paths，本例未启用  
+    // path 是当引用路径太深时，可以用path来给路径进行简化
+    //,paths:{  
+    //  "jQueryPath":"jquery"  
+    //}  
+      
+    //define each alias name here 
+    // 给所依赖的模块起别名 
+    ,alias:{ //auto add suffix .js  
+        "jQuery1.11.2":"../sea-modules/jquery-1.11.2.min"  
+        ,"hellow":"../hellow/hellow"  
+    }  
+    // 预加载项
+    // 在其他模块加载前，提前加载好这个模块
+    ,preload:'jQuery1.11.2'  
+    // 变量配置？？
+    // 因为在某些场景下，模块路径运行时才能确定，此时用vars变量来配置
+    // ,vars:{  
+    //    'locale':'zh-cn' //本例未启用,在模块中可用格式{key},即{locale}表示变量  
+    // }  
+});  
+//加载入口模块，加载完成后调用模块的方法  
+// 在加载hellowMain时，要确保preload中的模块加载好了
+seajs.use(['../static/hellow/hellowMain.js'],function(hm){  
+  // 使用hellowMain中的initEvent方法
+    hm.initEvent();   
+});  
+//seajs.use(['jQuery1.11','../static/hellow/hellowMain.js']);  
+</script>  
+</body>  
+</html>  

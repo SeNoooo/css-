@@ -1,0 +1,71 @@
+<html>
+  <head>
+    <script src="underscore.js"></script>
+    <script src="jquery-1.11.2.min.js"></script>
+    <script src="backbone.js"></script>
+  </head>
+  <body>
+    <p id="p1">
+      <span>p1</span>
+      <a href="#">p1a</a>
+    </p>
+    <p id="p2">p2</p>
+    <script type="text/javascript">
+     
+      // ToDoItem类从Backbone中继承Model类
+      var ToDoItem = Backbone.Model.extend({
+        
+      });
+
+      // 实例化ToDoItem类
+      var toDoItem = new ToDoItem({
+        'title' : 'task1',
+        'description' : 'description1'
+      })
+
+      var toDoItem2  = new ToDoItem({
+        'title' : 'task2',
+        'description' : 'description2'
+      })
+     
+      var ToDoItemView = Backbone.View.extend({
+        // 会自动调用initialize方法
+        initialize : function(){
+          this.listenTo(this.model,'change',this.render)
+        },
+        tagName: 'div',
+        className : 'toDoItem',
+        render : function(){
+          var json = this.model.toJSON()
+          this.$el.html('<h3>'+json.title+'</h3><p>'+json.description+'</p>')
+          return this
+        },
+
+        
+        // 直接给p绑定了
+        events : {
+          'click span' : 'handleSpanClick',
+        },
+
+        handleSpanClick : function(){
+          console.log('click')
+        },
+
+      })
+      var toDoItemView = new ToDoItemView({
+        model:toDoItem,
+      })
+
+      var toDoItemView2 = new ToDoItemView({
+        model:toDoItem2,
+      })
+
+      toDoItemView.render().$el.appendTo('body')
+      toDoItemView2.render().$el.appendTo('body')
+      // 使用set的时候change事件是自动触发的
+      // toDoItemView.listenTo(toDoItem,'change',function(){
+      //   console.log('toDoItemView receive change')
+      // })
+    </script>
+  </body>
+</html>

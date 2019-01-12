@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+  <script type="text/javascript" src="backbone.js"></script>
+</head>
+<body>
+  <script>
+  Person = Backbone.Model.extend({
+        // 如果从validate中返回字符串了, Backbone就会抛个实例异常
+        validate: function( attributes ){
+            console.log(111111)
+            if( attributes.name != "Dr Manhatten" && attributes.age < 0 ){
+                return "你的存在是个错误";
+            }
+        },
+        initialize: function(){
+            alert("欢迎来到这个报错的世界");
+            this.bind("error", function(model, error){
+              console.log(22222222)
+                // 收到个错误，记录，警告，然后忘记它。╮(‵▽′)╭
+                alert( error );
+            });
+        }
+    });
+    var person = new Person;
+    person.set({ name: "lily", age: -2 });
+  </script>
+</body>
+</html>

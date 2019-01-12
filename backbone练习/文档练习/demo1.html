@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+<script type="text/javascript" src="backbone.js"></script>
+ 
+<link href="http://cdn.bootcss.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="external nofollow" rel="external nofollow" rel="external nofollow" rel="stylesheet">
+</head>
+<body>
+ <table id="js-id-gists" class="table">
+  <thead><th>description</th><th>URL</th><th>created_at</th></thead>
+  <tbody></tbody>
+ </table>
+ <script type="text/javascript">
+//  创建一个model并实例化
+ var Gist = Backbone.Model.extend({
+  //  数据源  api接口的地址
+  url: 'https://api.github.com/gists/public',
+  // 拿到数据后要进行的操作
+  parse: function (response) {
+   return (response[0]);
+  }
+ }),
+  gist = new Gist();
+ 
+ gist.on('change', function (model) { 
+  var tbody = document.getElementById('js-id-gists').children[1],
+   tr = document.getElementById(model.get('id'));
+  //  如果没有tr 则创建tr 并给tr属性id 为传回数据中的id的值
+  //  model.get('id') 意思为得到传回的数据中的id属性对应的值
+  if (!tr) {
+   tr = document.createElement('tr');
+   tr.setAttribute('id', model.get('id'));
+  }
+  tr.innerHTML = '<td>' + model.get('description') + '</td><td>' + model.get('url') + '</td><td>' + model.get('created_at') + '</td>';
+  tbody.appendChild(tr);
+ });
+ //  执行fetch。从远程获取数据，获到数据后会触发change事件
+ gist.fetch();
+ </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <script src="underscore.js"></script>
+    <script src="jquery-1.11.2.min.js"></script>
+    <script src="backbone.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+       
+      // ToDoItem类从Backbone中继承Model类
+      var ToDoItem = Backbone.Model.extend({
+
+      });
+
+      var toDoItem = new ToDoItem({
+        'title' : 'task1',
+        'description' : 'description1'
+      })
+
+      var toDoItem2 = new ToDoItem();
+
+      // 对象与对象之间监听
+      // 监听toDoItem 的 change:title事件
+      toDoItem2.listenTo(toDoItem,'change:title',function(){
+        //  this is toDoItem2 
+        console.log(this)
+      })
+
+      // on监听change事件  change是指无论那个属性发生变化都会触发
+      // change:decription 是指只有当description属性发生变化时change事件才会触发
+      // destroy 当这个model被销毁  
+      // sync    当这个model数据与服务器端进行同步的时候触发
+      // invalid  对这个model进行校验 发生错误的话会触发 
+      // model监听自己
+      toDoItem.on('change:description',function(){
+        // this指针指向的是toDoItem
+        if(this.hasChanged('description')){
+          console.log('description changed!')
+        }else{
+          console.log('description not changed!')
+        }
+      })
+      // 取消事件监听
+      // 不加参数取消所有事件监听
+      // 加参数 取消指定事件监听
+      // toDoItem.off('change:title')
+    </script>
+  </body>
+</html>

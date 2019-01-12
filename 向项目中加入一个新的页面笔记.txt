@@ -1,0 +1,70 @@
+1.打开企业信息页面，加载的是console.html页面
+2.在console.html页面里引入
+    handlebars.min.js  这个文件作用是用语法构建html模板
+    underscore-min.js  这个文件里面包含很多方法来对数据进行处理 
+    sea.js 这个文件是为了整个项目可以更好的进行模块调用
+    jquery
+    xui.min.js  这个文件样式插件
+    highcharts.js 这个文件是表格插件
+ 3. 在console.html文件写
+    window.i18n = new Lang();
+    i18n.loadPack('./locales/console/');
+    这个语句是辨别网页语言类型，然后加载相应的语言包
+4.在console.html中 对seajs进行配置
+seajs.config({
+        debug: false,
+        base: "./modules/",
+        alias: {
+            // 这些路径都是相对与modules下的console下的main所在位置的
+            // config是模块名数据
+            "config": '../../config',
+            // 处理数据的一些方法函数
+            "util": '../base/util',
+            'Handlebars': '../../statics/scripts/handlebars.min',
+            // handlebars的一些helper方法
+            'helper': '../base/helper'
+        },
+        // js映射为js?v=@@version
+        map: [
+            ['.js', '.js?v=@@version']
+        ]
+    });
+// 主入口的js模块
+    seajs.use('console/main');
+5.配置完成后进入主入口模块main.js
+   define(function (require, exports, module) {
+	.............
+   })
+   5.1在main.js 中按照seajs语法创建成模块，
+   5.2加载所依赖的模块数据
+   5.3用backbone.js 语法创建路由router用来匹配不同的页面
+   5.4用下面语句来发送请求，从后台获取数据，然后在done中对数据进行处理
+	$.when($.request({
+    	url: '/role/api/listRole'
+  	}), $.request({
+    	url: '/conf/api/getServerConf'
+  	}), $.request({
+    	   url: '/conf/api/getConf',
+    	   data: {
+      	   confs: [{
+        	      key: 'openGroup'
+      	   }, {
+        	      module: 'dept',
+       	      key: 'displayOrgStructure'
+      	    }]
+    	}
+  	}), $.request({
+   	   url: '/user/api/getUserInfo'
+  	})).done(function (data, serverConfig, confs, user) {
+                     ............
+                })
+6.对数据处理结束后，在done中用require引入需要加载的模块，
+  此时需要加载的模块中需要应该包含我们添加页面的js模块和tpl模块
+7.在合适的文件夹创建js 和 tpl模块
+8.在js模块中引入依赖的文件 配置addNav 明确此js模块的父子关系和名字
+9.配置route路由，并且当路由匹配是执行
+   9.1向后台发送数据，获取此路由对应匹配的数据，
+   9.2对数据进行处理 把数据加载给模板 并渲染模板
+      var tpl = Handlebars.compile(require('./overview/overview.tpl'))
+      tpl = tpl(data)
+      init.insertCenter(tpl)
