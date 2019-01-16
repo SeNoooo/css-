@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="UTF-8">
+  <title>dialog</title>
+  <link rel="stylesheet" href="dialog2.css">
+  <script src="jquery-1.11.2.min.js"></script>
+  <script src="dialog2.js"></script>
+</head>
+<body>
+   <p class="dialog">click me</p>
+   <script>
+      $('.dialog').on('click',function(event){
+          $.dialog({
+              width: 600,
+              height: 400,
+              blankClose: true,
+          })
+      }) 
+   </script>
+</body>
+</html>
