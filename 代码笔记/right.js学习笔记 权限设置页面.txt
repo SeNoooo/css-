@@ -1,0 +1,465 @@
+//获取模板列表
+  function rightInit() {
+    $.request({
+      url: '/acltemplet/api/aclTempletList',
+      done: function (data) {
+        if (data.stat === 'OK') {
+          // data为此时所有的权限模板
+          // console.log(data)
+          var list = {}
+          list.templetList = data.aclTempletList
+          // 第一个权限模板的atid最大
+          var maxAtid = data.aclTempletList[0].atid
+          $.each(list.templetList, function (i, v) {
+            // 合并此时遍历出的权限模板如果没有maxAtid属性 则加入maxAtid属性
+            _.extend(v, { maxAtid: maxAtid })
+          })
+          var tpl = Handlebars.compile(require('./right/content.tpl'))(list)
+          init.insertCenter(tpl)
+          $('.body-center').layout()
+          getTempData()//获取所有权限数据
+          getTempletDetail(maxAtid) //初始化时默认显示最大atid模板详情
+          //绑定事件
+          $('.temp-create').bind('click', dialogCreate) //点击新建btn
+
+          $('.temp-delete').bind('click', deleteCheckedTemp) //点击删除模板
+
+          $('.right-list input').bind('click', rightListCheck) //点击rightlist下的input选择
+
+          $('.right-list').bind('click', rightListHandle.bind(event)) //点击rightlist下的模板列表
+        }
+      }
+    })
+
+  }
+  //获取所有权限数据，确保后续能都能拿到，采用同步的方式
+  function getTempData() {
+    $.request({
+      url: '/acl/api/getRightOptions',
+      async: false,
+      // 先拿文件夹权限值数据
+      params: {
+        isdir: true
+      },
+      done: function (dirData) {
+        if (dirData.stat === 'OK') {
+          templetData.dirData = dirData.RightOptions
+          $.request({
+            url: '/acl/api/getRightOptions',
+            async: false,
+            // 再拿文件权限值数据
+            params: {
+              isdir: false
+            },
+            done: function (notDirData) {
+              if (notDirData.stat === 'OK') {
+                templetData.notDirData = notDirData.RightOptions
+              }
+            }
+          })
+        }
+      }
+    })
+    // 此时templateData中有dirData和notDirData数据
+  }
+  
+  /**获取模板详情 默认为最大atid模板
+   * @parma atid 模板id
+   */
+  function getTempletDetail(atid) {
+    $.request({
+      url: '/acltemplet/api/getAclTemplet',
+      params: {
+        atid: atid
+      },
+      done: function (data) {
+        if (data.stat === 'OK') {
+          // 修改templetData对象，把atid最大的权限模板的信息放入到templetData中
+          templetData = _.extend(templetData, data.aclTempletInfo)
+          rightOptionsInit()
+        }
+      }
+    })
+  }
+
+  //权限模板右边展示数据处理
+  function rightOptionsInit() {
+    if (templetData) {
+      var dirRightNum = 0 //文件夹下拥有权限的个数
+      var notDirRightNum = 0 //文件下拥有权限的个数
+
+      //处理templetData数据（文件夹）
+      // 遍历文件夹权限值
+      $.each(templetData.dirData, function (i, v) {
+        var obj = {}
+        // 初始时是比较atid最大的模板的right值和每一个文件夹权限值中的key属性
+        // 返回true或者false放入obj的hasRight属性中
+        obj.hasRight = util.checkRight(templetData.right, v.key)
+        // 如果比较后返回true
+        if (util.checkRight(templetData.right, v.key)) {
+          dirRightNum += 1
+        }
+        // 给此时的文件夹权限值加上obj中的hasright属性
+        _.extend(v, obj)
+      })
+
+      //处理templetData数据（非文件夹）
+      $.each(templetData.notDirData, function (i, v) {
+        var obj = {}
+        obj.hasRight = util.checkRight(templetData.right, v.key)
+        if (util.checkRight(templetData.right, v.key)) {
+          notDirRightNum += 1
+        }
+        _.extend(v, obj)
+      })
+
+      //遍历完之后，若拥有的权限包含所有，那么将全选置为true（文件夹）
+      if (dirRightNum === templetData.dirData.length) {
+        // 给templedata加上dircheckall属性为true
+        _.extend(templetData, { dirCheckAll: true })
+      } else {
+        _.extend(templetData, { dirCheckAll: false })
+      }
+
+      //遍历完之后，若拥有的权限包含所有，那么将全选置为true(非文件夹)
+      if (notDirRightNum === templetData.notDirData.length) {
+        _.extend(templetData, { notDirCheckAll: true })
+      } else {
+        _.extend(templetData, { notDirCheckAll: false })
+      }
+
+      var tpl = Handlebars.compile(require('./right/rightEast.tpl'))(templetData)
+      console.log('权限模板详情数据', templetData)
+      $('.center-east').html(tpl)
+      //权限模板详情初始化完毕之后编辑按钮注册点击事件
+      $('.dept-edit').bind('click', editTemplet)
+    }
+  }
+
+  //验证用户名强度,并提示
+  function validAccount(val) {
+    var reg = /^[a-zA-Z0-9-.@_\u4e00-\u9fa5]{2,30}$/
+    var val = $('.temp-header input').val()
+    if (!val) {
+      if ($('.temp-header .tip-info').length === 0) {
+        $('.temp-header').append('<p class="tip-info">' + '权限模板名称不能为空' + '</p>')
+      }
+      return false
+    }
+    // $.trim(val)去掉val值中的空格
+    if (!reg.test($.trim(val))) {
+      $('.temp-header').append('<p class="tip-info">' + '长度2~30字符,仅支持汉字、字母、数字、下划线、“-”、“@”和“.' + '</p>')
+      return false
+    }
+    return true
+  }
+
+  //点击新建弹窗
+  function dialogCreate() {
+    if (!$('#create-right-dialog').lenth) {
+      $('body').append('<div id="create-right-dialog"></div>')
+    }
+    dirCheckedArr = [] //点击新建模板的时候将全局选择权限数组清空
+    notDirCheckedArr = []
+    var obj = { create: true }
+    templetData = _.extend(templetData, obj)
+    $('#create-right-dialog').dialog({
+      title: '新建模板',
+      width: 651,
+      height: 451,
+      data: Handlebars.compile(require('./right/temp.tpl'))(templetData),
+      onInited: function () {
+        onInitClick()
+      },
+      buttons: [{
+        text: '确认',
+        name: 'confirm',
+        cls: 'btn-primary',
+        handler: function () {
+          // 验证用户名
+          var valid = validAccount()
+          var tempName = $.trim($('.temp-header input').val())
+          if (valid) {
+            var checkedRight = []
+            // 包含所有复选框（文件/文件夹）
+            $.each($('.temp-body input'), function (i, v) {
+              // 如果此时的复选框有key属性并且是选中状态
+              if ($(v).attr('key') && $(v).prop('checked')) {
+                // 把复选框的key属性加到checkedRight数组中
+                checkedRight.push($(v).attr('key'))
+              }
+            })
+            // _.uniq()数组去重方法
+            // util.setRight设置权限方法
+            var createTempletRight = util.setRight(_.uniq(checkedRight))
+            // 返回2几次方+2的几次方+....的值
+            console.log(createTempletRight)
+            if (
+              !$('.temp-header').find('.tip-info').length &&
+              !$('.notdir-check-wrap').find('.tip-info').length
+            ) {
+              createTemplet(tempName, createTempletRight)
+            }
+          }
+        }
+      }, {
+        text: '取消',
+        name: 'cancel',
+        cls: 'btn-disabled',
+        handler: function () {
+          $('#create-right-dialog').dialog('close')
+        }
+      }]
+    })
+  }
+
+  //弹窗初始化注册弹窗内dom事件
+  function onInitClick() {
+
+
+    var dirCheck = $('.dir-check-all')
+    var notDirCheck = $('.notdir-check-all')
+
+    //弹窗内文件夹全选处理
+    dirCheck.bind('click', clickDirCheckAll)
+
+    //弹窗内非文件夹全选处理
+    notDirCheck.bind('click', clickNotDirCheckAll)
+    // 两个数组，里面分别放着文件和文件夹的input元素
+    var dirSingle = $('.create-dir-single-check input')
+    var notDirSingle = $('.create-notdir-single-check input')
+    // ？？？
+    dirSingle.change(dirSingleChange.bind(event))
+    notDirSingle.change(notDirSingleChange.bind(event))
+
+
+    //模板名称input框聚焦事件
+    $('.temp-header input').focus(function () {
+      if ($('.temp-header').find('.tip-info')) {
+        $('.temp-header').find('.tip-info').remove()
+      }
+    })
+  }
+
+
+  //文件夹单选改变状态处理
+  function dirSingleChange(event) {
+    // 如果底部出现提示，取消提示
+    if ($('.notdir-check-wrap').find('.tip-info').length) {
+      $('.notdir-check-wrap').find('.tip-info').remove()
+    }
+    // 如果此时选中的是可见权限
+    // 改变就是说当从选中状态改变时触发
+    if ($(event.target).attr('key') === 'show') {
+      if (!$(event.target).prop('checked')) {
+        eachDirInputChange([], ['show', 'dirList', 'dirCreate', 'dirUpload', 'dirDownload', 'dirCopy', 'dirMove', 'dirRename', 'link', 'send', 'dirDelete', 'dirRecovery', 'fileManager'])
+        eachNotdirInputChange([], ['showFile', 'preview', 'edit', 'history', 'download', 'copy', 'move', 'rename', 'link', 'send', 'delete', 'recovery', 'lock', 'fileManager'])
+      }
+      // 判断一下是否存在未选中的input 以此来判断全选按钮状态
+      judgeAllCheck()
+      return
+    }
+
+    // 如果选中文件夹列表
+    if ($(event.target).attr('key') === 'dirList') {
+      // 从未选中到选中时触发
+      if ($(event.target).prop('checked')) {
+        eachDirInputChange(['show'])
+        eachNotdirInputChange(['showFile'])
+      }
+      // 从选中到未选中时触发
+      if (!$(event.target).prop('checked')) {
+        eachDirInputChange([], ['dirList', 'dirCreate', 'dirUpload', 'dirDownload', 'dirCopy', 'dirMove', 'dirRename', 'link', 'send', 'dirDelete', 'dirRecovery', 'fileManager'])
+        eachNotdirInputChange([], ['showFile', 'preview', 'edit', 'history', 'download', 'copy', 'move', 'rename', 'link', 'send', 'delete', 'recovery', 'lock', 'fileManager'])
+      }
+      judgeAllCheck()
+      return
+    }
+
+    if ($(event.target).attr('key') === 'dirCreate') {
+      if ($(event.target).prop('checked')) {
+        eachDirInputChange(['show', 'dirList'])
+        eachNotdirInputChange(['showFile', 'preview'])
+      }
+      judgeAllCheck()
+      return
+    }
+
+    if ($(event.target).attr('key') === 'dirUpload') {
+      if ($(event.target).prop('checked')) {
+        eachDirInputChange(['show', 'dirList'])
+        eachNotdirInputChange(['showFile', 'edit', 'history', 'lock'])
+      }
+      judgeAllCheck()
+      return
+    }
+
+    if (
+      $(event.target).attr('key') === 'fileManager' ||
+      $(event.target).attr('key') === 'send' ||
+      $(event.target).attr('key') === 'link'
+    ) {
+      if ($(event.target).prop('checked')) {
+        eachDirInputChange(['show', 'dirList'])
+        console.log($(event.target).attr('key'))
+        eachNotdirInputChange(['showFile', $(event.target).attr('key')])
+      } else {
+        eachDirInputChange(['show'])
+        eachNotdirInputChange([], [$(event.target).attr('key')])
+      }
+      judgeAllCheck()
+      return
+    }
+
+    //文件夹可见和列表是其他所有文件夹权限的基础
+    if ($(event.target).attr('key') !== 'show' && $(event.target).attr('key') !== 'dirList') {
+      eachDirInputChange(['show', 'dirList'])
+      eachNotdirInputChange(['showFile'])
+      judgeAllCheck()
+      return
+    }
+  }
+
+  //文件单选改变状态处理
+  function notDirSingleChange(event) {
+    if ($('.notdir-check-wrap').find('.tip-info').length) {
+      $('.notdir-check-wrap').find('.tip-info').remove()
+    }
+    if ($(event.target).attr('key') === 'send' || $(event.target).attr('key') === 'fileManager') {
+      if ($(event.target).prop('checked')) {
+        eachDirInputChange(['show', 'dirList', $(event.target).attr('key')])
+        eachNotdirInputChange(['showFile'])
+      } else {
+        console.log($(event.target).attr('key'))
+        eachDirInputChange([], [$(event.target).attr('key')])
+        eachNotdirInputChange([], [$(event.target).attr('key')])
+      }
+      judgeAllCheck()
+      return
+    }
+
+    if ($(event.target).attr('key') === 'show') {
+      if ($(event.target).prop('checked')) {
+      } else {
+        eachDirInputChange([], ['link', 'send', 'fileManager'])
+        eachNotdirInputChange([], ['preview', 'edit', 'history', 'download', 'copy', 'move', 'rename', 'link', 'send', 'delete', 'recovery', 'lock', 'fileManager'])
+      }
+      judgeAllCheck()
+      return
+    }
+
+    if ($(event.target).attr('key') === 'link') {
+      if ($(event.target).prop('checked')) {
+        eachDirInputChange(['show', 'dirList', 'link'])
+        eachNotdirInputChange(['showFile'])
+      } else {
+        eachDirInputChange([], ['link'])
+        eachNotdirInputChange([], ['link'])
+      }
+      judgeAllCheck()
+      return
+    }
+
+    if ($(event.target).attr('key') !== 'show') {
+      if ($(event.target).prop('checked')) {
+        eachNotdirInputChange(['showFile'])
+      }
+      judgeAllCheck()
+      return
+    }
+  }
+
+  //判断文件夹,文件中单选框是否存在未选中
+  function judgeAllCheck() {
+    var dirWrap = $('.create-dir-single-check')
+    var notDirWrap = $('.create-notdir-single-check')
+    // 如果存在为选中的input
+    if ($(dirWrap).find('input').not('input:checked').length) {
+      $('.dir-check-all').prop('checked', false)
+    } else {
+      $('.dir-check-all').prop('checked', true)
+    }
+
+    if ($(notDirWrap).find('input').not('input:checked').length) {
+      $('.notdir-check-all').prop('checked', false)
+    } else {
+      $('.notdir-check-all').prop('checked', true)
+    }
+  }
+
+  //点击编辑按钮
+  function editTemplet() {
+    if (!$('#edit-temp-dialog').length) {
+      $('body').append('<div id="edit-temp-dialog"></div>')
+    }
+    var obj = { create: false }
+    templetData = _.extend(templetData, obj)
+
+    //弹出编辑框前，遍历已勾选的权限，push到全局保存已勾选状态数组里
+    _.forEach(templetData.dirData, function (val, index) {
+      dirCheckedArr.push(val.key)
+    })
+
+    _.forEach(templetData.notDirData, function (val, index) {
+      if (val.hasRight) {
+        notDirCheckedArr.push(val.key)
+      }
+    })
+    // 此时数组中包含所有的权限值
+    // console.log(dirCheckedArr)
+    $('#edit-temp-dialog').dialog({
+      title: '编辑模板',
+      width: 651,
+      height: 451,
+      data: Handlebars.compile(require('./right/temp.tpl'))(templetData),
+      onInited: function () {
+        onInitClick()
+      },
+      buttons: [{
+        text: '保存',
+        name: 'save',
+        cls: 'btn-primary',
+        handler: function () {
+          //点击保存之前，验证名称
+          var valid = validAccount()
+          var tempName = $.trim($('.temp-header input').val())
+          var atid
+          if (valid) {
+            // 遍历左边的权限模板列
+            $.each($('.right-list-wrap .right-list'), function (i, v) {
+              if ($(v).hasClass('right-title-checked')) {
+                atid = parseInt($(v).attr('atid'))
+              }
+            })
+            var checkedRight = []
+            $.each($('.temp-body input'), function (i, v) {
+              if ($(v).attr('key') && $(v).prop('checked')) {
+                checkedRight.push($(v).attr('key'))
+              }
+            })
+            // 显示此时选中模板的权限值数据
+            console.log(checkedRight)
+            var editTempletRight = util.setRight(_.uniq(checkedRight))
+            // 显示此时选中的input的值的和
+            // console.log(editTempletRight)
+            $.confirm(
+              '是否确定保存修改内容？',
+              {
+                title: '提示'
+              },
+              function () {
+                modifyTemplet(tempName, editTempletRight, atid)
+              }
+            )
+          }
+        }
+      }, {
+        text: '取消',
+        name: 'cancel',
+        cls: 'btn-primary',
+        handler: function () {
+          $('#edit-temp-dialog').dialog('close')
+        }
+      }]
+    })
+  }

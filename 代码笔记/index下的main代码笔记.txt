@@ -1,0 +1,272 @@
+define(function (require, exports, module) {
+  var config = require('config')
+  var util = require('util')
+  window.login = config.login
+  window.roles = []
+  // 全局事件对象
+  window.AppEvent = $({})
+  var hashmap = {
+    '/group': 'grouplist',
+    '/share': 'link',
+    '/lock': 'lock',
+    '/recycle': 'recycle'
+  }
+  /**
+   * 个人群组开关
+   */
+  $.request({
+    url: '/moduleswitch/api/ListModuleSwitch',
+    async: false,
+    done: function (data) {
+      // console.log(data)
+      if (data.stat === 'OK') {
+        window.moduleswitch = data.moduleswitch
+      }
+    }
+  })
+
+  var Router = window.Backbone.Router.extend({
+    routes: {
+      '*other': function (callback, args) {
+        // 判断#...是否存在
+        if (!window.location.hash.substr(1)) {
+          // 如果不存在
+          if (window.moduleswitch.personal === true) {
+            // 在backbone中手动改变地址
+            this.navigate(
+              'fs/0/' +
+              encodeURIComponent(i18n.get('base.personal.files')) +
+              '/' +
+              encodeURIComponent(
+                // ? ? ?
+                window.rootPath.protocol + window.rootPath.path
+              ) +
+              '/' +
+              Math.random(),
+              {
+                trigger: true
+              }
+            )
+            return
+          }
+          if (window.moduleswitch.group === true) {
+            this.navigate('group/0/0/群组文件/0/0/root/' + Math.random(), {trigger: true})
+            return
+          }
+        } else {
+          // 您访问的路径不存在
+          $.alert(i18n.get('main.path.not.found'))
+        // $('.body-center').empty()
+        }
+        return false
+      }
+    },
+    execute: function (callback, args) {
+      // if ($('#xmenu').length) $('#xmenu').remove()
+      // if ($('#xmsg').length) $('#xmsg').add($('#msg-mask')).remove()
+      // if ($('.xdialog').length) $('.xdialog').add($('.xmask')).remove()
+      $('#keyword').val('')
+      $('ins').remove()
+      // $(document)选中的是整个html元素的集合
+      $(document).trigger('click')
+      document.title = config.title
+      var hash = window.location.hash.substr(1)
+      // 判断此时是#recycle或者#group等等页面中的某一个
+      // 先清空按钮和导航
+      $('.page-buttons-wrap').html('')
+      $('.breadcrumb-wrap').show()
+      // 页面上传、新建按钮设置
+      // 当是fs或者group模块的时候
+      if (hash.indexOf('fs') === 0 || hash.indexOf('group') === 0) {
+        // 显示上传和新建按钮，隐藏高级检索按钮
+        $('#uploadfile').show()
+        $('#newMenuBtn').show()
+        $('.advance-search-wrap').hide()
+      } else {
+        $('#uploadfile').hide()
+        $('#newMenuBtn').hide()
+        $('.advance-search-wrap').show()
+      }
+      // 页面搜索框设置
+      // 如果是#msg模块（消息中心模块） 隐藏搜索
+      if (hash.indexOf('msg') === 0) {
+        $('.nav-right').hide()
+      } else {
+        $('.nav-right').show()
+      }
+      if (hash.indexOf('recent') === 0) {
+        setNavHeight('35px')
+      // $('.nav-functional-area').hide()
+      } else {
+        setNavHeight('84px')
+        $('.nav-functional-area').show()
+      }
+      if (hash.indexOf('coop') === 0) {
+        setNavHeight('120px')
+        // $('.view-mode').hide()
+        $('.search-input').hide()
+      } else {
+        $('.search-input').show()
+        $('.body-center-nav > .tab-wrap').remove()
+      }
+      if (hashmap.hasOwnProperty(hash)) {
+        $('.menu-item[name=' + hashmap[hash] + ']').click()
+      } else {
+        $('.current-menu').removeClass('current-menu')
+        if (callback) callback.apply(this, args)
+      }
+    }
+  })
+  function setNavHeight (height) {
+    $('.body-center-nav').css('height', height)
+    $('.body-center-content').css('top', height)
+  }
+  // 全局路由对象
+  window.AppRouter = new Router()
+  // 记录当前位置
+  window.current = {}
+  // 判断是否XP IE浏览器
+  var browser = $.browser().browser
+  // $.browser()方法可以拿到现在浏览器和操作系统的信息以及当前页面视口信息
+  // console.log($.browser())
+  window.pageRows = 30
+  window.isXP = false
+  // 如果浏览器ie并且 没有找到windows NT 5.1
+  if (
+    browser.name === 'Internet Explorer' &&
+    navigator.userAgent.indexOf('Windows NT 5.1') > -1
+  ) {
+    window.isXP = true
+    window.pageRows = 30
+    util.setCookie('viewMode', 'list', 24 * 365)
+  }
+  var request = util.getRequest()
+  if (request.token) {
+    document.cookie = 'token=' + request.token + ';path=/'
+  }
+  function getFavTid () {
+    $.request({
+      url: '/filetag/api/getUserTag',
+      done: function (data) {
+        console.log(data)
+        if (data.stat === 'OK') {
+          window.favTid = [_.indexBy(data.rows, 'name')['favorites'].tid]
+        } else {
+          if (
+            data.stat === 'ERR_USER_NOT_FOUND' ||
+            data.stat === 'ERR_COMPANY_IS_LOCKED'
+          ) {
+            return $.info(data.errText, function () {
+              window.location.href = '/web/login.html'
+            })
+          }
+          $.alert(data.errText)
+        }
+      }
+    })
+  }
+  getFavTid()
+
+  $.when(
+    $.request({
+      url: '/user/api/getUserInfo'
+    }),
+    $.request({
+      url: '/conf/api/getServerConf'
+    }),
+    $.request({
+      url: '/role/api/listRole'
+    }),
+    $.request({
+      url: '/conf/api/getConf',
+      data: {
+        confs: [
+          {
+            module: 'group',
+            key: 'openGroup'
+          },
+          {
+            module: 'dept',
+            key: 'displayOrgStructure'
+          }
+        ]
+      }
+    }),
+    $.request({
+      url: '/group/api/getGroupRoleRight'
+    })
+  ).done(function (user, serverConfig, data, confs, hasGroupManager) {
+    if (hasGroupManager.stat === 'OK') {
+      window.hasGroupManager = hasGroupManager.isRootGroupManager
+    }
+    if (data.stat === 'OK' && data.rows.length) {
+      $.each(data.rows, function (i, v) {
+        window.roles.push(v.role.name)
+      })
+    }
+    if (user.stat === 'OK') {
+      window.userinfo = user.user
+      window.rootPath = {
+        protocol: user.protocol,
+        path: user.path
+      }
+    }
+    if (serverConfig.stat === 'OK') {
+      window.serverConfig = serverConfig.modules
+      // 判断saas还是private
+      if (window.serverConfig.saas && window.serverConfig.saas.enable) {
+        window.serverConfig.mode = 'saas'
+      } else {
+        window.serverConfig.mode = 'private'
+      }
+      // 插件模块列表
+      var plugins = config.plugins.index
+      $.each(plugins, function (i, v) {
+        if (v.split('/').length > 1) {
+          plugins[i] = '../../plugins/' + v
+        } else {
+          plugins[i] = '../../plugins/' + v + '/index'
+        }
+      })
+      // 需要加载的模块
+      var modules = _.union(
+        config.modules.index[window.serverConfig.mode],
+        config.modules.view,
+        plugins
+      )
+      // 是否支持协同模块
+      if (window.serverConfig.coop && !window.serverConfig.coop.enable) {
+        if (_.indexOf(modules, './coop') > -1) {
+          modules = _.filter(modules, function (v) { return v !== './coop' })
+        }
+      }
+      // 是否支持搜索
+      if (window.serverConfig.search && !window.serverConfig.search.enable) {
+        if (_.indexOf(modules, './search') > -1) {
+          modules = _.filter(modules, function (v) { return v !== './search' })
+        }
+      }
+      if (window.moduleswitch.group !== true) {
+        if (_.indexOf(modules, './group') > -1) {
+          modules = _.filter(modules, function (v) { return v !== './group' })
+        }
+      }
+    }
+    if (confs.stat === 'OK') {
+      window.conf = {}
+      $.each(confs.rows, function (i, v) {
+        window.conf[v.key] = v.value
+      })
+    }
+    window.modules = modules
+    // 异步加载所需模块
+    require.async(modules, function () {
+      // 模块加载完成之后执行各模块初始化
+      $.each(arguments, function (i, v) {
+        if (v && v.hasOwnProperty('initialize')) v.initialize()
+      })
+      // 启动路由监听
+      window.Backbone.history.start()
+    })
+  })
+})

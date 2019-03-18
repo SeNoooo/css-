@@ -5,6 +5,7 @@
   <link rel="stylesheet" href="dialog2.css">
   <script src="jquery-1.11.2.min.js"></script>
   <script src="dialog2.js"></script>
+  <script src="../src/util.js"></script>
 </head>
 <body>
    <p class="dialog">click me</p>
@@ -13,7 +14,19 @@
           $.dialog({
               width: 600,
               height: 400,
-              blankClose: true,
+              title:'csx',
+              url:'dialog2_ajax.html',
+              buttons: [{
+                        text: '取消',
+                        name: 'cancel',
+                        handle: function(){
+                            console.log('取消')
+                        }
+                    }, {
+                        text: '保存',
+                        cls: 'btn-primary',
+                        name: 'save',
+                    }],
           })
       }) 
    </script>
